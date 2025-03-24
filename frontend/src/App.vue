@@ -1,16 +1,13 @@
 <template>
-  <!-- <div id="app"> -->
-    <!-- <h1>银行家算法可视化</h1> -->
-    <Banker />
-  <!-- </div> -->
+    <Packager />
 </template>
 
 <script>
-import Banker from "./components/Banker.vue";
+import Packager from "./components/packager.vue";
 
 export default {
   components: {
-    Banker,
+    Packager,
   },
 };
 </script>

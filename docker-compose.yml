@@ -2,7 +2,7 @@ services:
   # 共享 PostgreSQL 数据库
   db:
     image: postgres:14
-    container_name: postgres_db_shared
+    container_name: packager_db_shared
     environment:
       POSTGRES_DB: mydb
       POSTGRES_USER: myuser
@@ -19,7 +19,7 @@ services:
     build:
       context: /home/zgcc/project/packager/backend
       dockerfile: Dockerfile
-    container_name: django_backend_zgcc
+    container_name: packager_backend_zgcc
     environment:
       DB_NAME: mydb
       DB_USER: myuser
@@ -38,7 +38,7 @@ services:
     build:
       context: /home/zgcc/project/packager/frontend
       dockerfile: Dockerfile
-    container_name: vue_frontend_zgcc
+    container_name: packager_frontend_zgcc
     depends_on:
       - backend_dev1
     networks:
