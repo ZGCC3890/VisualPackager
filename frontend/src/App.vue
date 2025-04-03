@@ -1,14 +1,10 @@
 <template>
-    <Packager />
+  <router-view />
 </template>
 
 <script>
-import Packager from "./components/packager.vue";
-
 export default {
-  components: {
-    Packager,
-  },
+  name: 'App'
 };
 </script>
 
