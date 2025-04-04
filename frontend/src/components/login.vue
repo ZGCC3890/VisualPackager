@@ -47,7 +47,8 @@
     try {
       const res = await userLogin(username.value, password.value)
       if (res.success) {
-        alert('登录成功')
+        localStorage.setItem('showLoginToast', 'true')
+        localStorage.setItem('isLoggedIn', 'true')
         router.push({ name: 'packager' })
       } else {
         alert('用户名或密码错误')
