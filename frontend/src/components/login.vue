@@ -16,18 +16,16 @@
       </div>
 </template>
   
-  
 <script setup>
   import { ref, onMounted } from 'vue'
   import { userLogin } from '../api/packager'  // 视项目目录结构而定
   import { useRouter } from 'vue-router'
 
-  const BASE_URL = import.meta.env.BASE_URL
   const backgroundImages = [
-    `${BASE_URL}backgrounds/bg1.png`,
-    `${BASE_URL}backgrounds/bg2.png`,
-    `${BASE_URL}backgrounds/bg3.png`,
-    `${BASE_URL}backgrounds/bg4.png`
+    `/backgrounds/bg1.png`,
+    `/backgrounds/bg2.png`,
+    `/backgrounds/bg3.png`,
+    `/backgrounds/bg4.png`
   ]
 
   onMounted(() => {
@@ -49,6 +47,7 @@
       if (res.success) {
         localStorage.setItem('showLoginToast', 'true')
         localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('username', res.username)
         router.push({ name: 'packager' })
       } else {
         alert('用户名或密码错误')
