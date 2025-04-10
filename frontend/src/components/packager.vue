@@ -106,10 +106,10 @@ const selectedLocation = ref('')           // 当前选中的地点
 
 // 各地点对应的限制
 const constraints = {
-  澳洲: { size: '外包箱单边长 ≤ 63cm', weight: '≤ 22kg' },
-  美国: { size: '外包箱单边长 ≤ 63cm', weight: '≤ 22kg' },
-  英国: { size: '外包箱单边长 ≤ 63cm', weight: '≤ 15kg' },
-  德国: { size: '外包箱单边长 ≤ 63cm', weight: '≤ 22.5kg' },
+  澳洲: { size: '单边长 ≤ 63cm', weight: '≤ 22kg' },
+  美国: { size: '单边长 ≤ 63cm', weight: '≤ 22kg' },
+  英国: { size: '单边长 ≤ 63cm', weight: '≤ 15kg' },
+  德国: { size: '单边长 ≤ 63cm', weight: '≤ 22.5kg' },
   日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weight: '≤ 40kg' }
 }
 

@@ -95,6 +95,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
+  white-space: pre-line;
 }
 
 /* 右白块 */
@@ -104,6 +106,7 @@
   padding: 8px 12px;
   font-size: 15px;
   color: #333;
+  cursor: pointer;
 }
 
 .std-body p {
