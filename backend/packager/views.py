@@ -41,7 +41,7 @@ def save_freight_view(request):
             weight = float(item.get('weight', 0))
 
             if any(v < 0 for v in [length, width, height, weight]):
-                return JsonResponse({'success': False, 'message': '长宽高重量必须大于0'})
+                return JsonResponse({'success': False, 'message': '长宽高重量必须>=0'})
 
             freight_obj = Freight(
                 user=user,

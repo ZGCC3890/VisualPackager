@@ -1,0 +1,240 @@
+.toolbar {
+  width: 1000px;
+  margin: 50px auto 0;
+  /* 居中并留出上方空间 */
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 20px;
+  gap: 10px;
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 提示词“发货地点” */
+.location-label {
+  font-size: 15px;
+  color: #333;
+}
+
+/* 下拉选单 */
+.location-select {
+  padding: 8px 16px;
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location-select:hover,
+.location-select:focus {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  outline: none;
+}
+
+/* 约束条件展示框 */
+.constraint-box {
+  margin-bottom: 5px;
+  padding: 8px 16px;
+  background-color: #f6f8fa;
+  border-left: 4px solid #4caf50;
+  font-size: 16px;
+  color: #333;
+  border-radius: 6px;
+}
+
+.std-label {
+  font-size: 16px;
+  color: black;
+  display: flex;
+  align-items: center;
+}
+
+/* 标准件信息按钮 */
+.std-btn {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, .5);
+  color: black;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.std-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+}
+
+/* 标准件信息展示卡 */
+.std-card {
+  display: flex;
+  width: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+  cursor: pointer;
+}
+
+.std-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .15);
+}
+
+/* 左蓝块 */
+.std-header {
+  flex: 0 0 140px;
+  background: #2196f3;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 右白块 */
+.std-body {
+  flex: 1;
+  background: #fff;
+  padding: 8px 12px;
+  font-size: 15px;
+  color: #333;
+}
+
+.std-body p {
+  margin: 2px 0
+}
+
+/* 添加货物按钮 */
+.add-freight-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-freight-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* 添加货物图标 */
+.add-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+/* 货物容器 */
+.freight-container {
+  width: 1000px;
+  min-height: 300px;
+  margin: 50px auto 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  position: relative;
+  padding: 20px;
+  padding-bottom: 80px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 货物列表 */
+.freight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+}
+
+/* 货物条目 */
+.freight-item {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background-color: transparent;
+  border-radius: 6px;
+  padding: 10px 10px;
+  font-size: 18px;
+}
+
+/* 货物字段 */
+.freight-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 输入框 */
+.freight-field input {
+  width: 60px;
+  height: 30px;
+  text-align: center;
+  padding: 2px 4px;
+  font-size: 16px;
+}
+
+/* 删除图标 */
+.delete-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+/* 保存按钮 */
+.save-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background-color: black;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.save-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* 去掉数字输入框右侧箭头 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 警告背景色 */
+.warning-item {
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+/* 警告字体 */
+.warning-input {
+  color: red;
+}
+
+/* 警告图标 */
+.warning-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+}
