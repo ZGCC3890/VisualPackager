@@ -44,7 +44,7 @@
     <!-- 显示约束条件 -->
     <div v-if="selectedLocation" class="constraint-box">
       <p>1. 外包箱尺寸限制：{{ constraints[selectedLocation].size }}</p>
-      <p>2. 单箱重量限制：{{ constraints[selectedLocation].weight }}</p>
+      <p>2. 单箱重量限制：{{ constraints[selectedLocation].weightText }}</p>
     </div>
     <!-- 货物列表 -->
     <div class="freight-list">
@@ -79,18 +79,17 @@
           <span>kg</span>
         </div>
 
-        <img v-if="freightWarnings[index]?.overweight" 
-          class="warning-icon" 
-          src="/icons/warning.png" 
-          alt="警告" />
+        <img v-if="freightWarnings[index]?.overweight" class="warning-icon" src="/icons/warning.png" alt="警告" />
 
-        <img class="delete-icon" 
-          src="/icons/delFreight.png" 
-          alt="删除" @click="deleteItem(index)" />
+        <img class="delete-icon" src="/icons/delFreight.png" alt="删除" @click="deleteItem(index)" />
       </div>
     </div>
 
-    <!-- 容器底部右下角的保存按钮，与列表右侧对齐 -->
+    <!-- 生成装箱方案按钮 -->
+    <button class="plan-button" @click="handleGeneratePlan">
+      生成装箱方案
+    </button>
+    <!-- 保存按钮，与列表右侧对齐 -->
     <button class="save-button" @click="handleSaveFreight">
       保存货物信息
     </button>
@@ -99,6 +98,7 @@
 
 <script setup>
 import { saveFreight } from '../api/packager'
+import { generatePackingPlan } from '../api/packager'
 import { ref, onMounted, computed } from 'vue'
 
 /* ----- 发货地点选择器 ----- */
@@ -106,11 +106,11 @@ const selectedLocation = ref('')           // 当前选中的地点
 
 // 各地点对应的限制
 const constraints = {
-  澳洲: { size: '单边长 ≤ 63cm', weight: '≤ 22kg' },
-  美国: { size: '单边长 ≤ 63cm', weight: '≤ 22kg' },
-  英国: { size: '单边长 ≤ 63cm', weight: '≤ 15kg' },
-  德国: { size: '单边长 ≤ 63cm', weight: '≤ 22.5kg' },
-  日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weight: '≤ 40kg' }
+  澳洲: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg' , length: 63, width: 63, height: 63, weight: 22 },
+  美国: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg' , length: 63, width: 63, height: 63, weight: 22 },
+  英国: { size: '单边长 ≤ 63cm', weightText: '≤ 15kg' , length: 63, width: 63, height: 63, weight: 15 },
+  德国: { size: '单边长 ≤ 63cm', weightText: '≤ 22.5kg', length: 63, width: 63, height: 63, weight: 22.5 },
+  日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weight: '≤ 40kg', length: 60, width: 50, height: 50, weight: 40 }
 }
 
 /* ----- 标准件信息显示 ----- */
@@ -201,47 +201,58 @@ async function handleSaveFreight() {
 /* ----- 错误信息提示 ----- */
 const freightWarnings = computed(() => {
   const location = selectedLocation.value
+  const std = stdMap[location] || {}
   const rule = constraints[location] || {}
 
-  if (!rule || !rule.size || !rule.weight) {
+  const stdSize = std.size || {}
+  const maxWeight = rule.weight || Infinity  // 外包箱最大承重
+
+  // 如果缺失标准件或限制，则不报警告
+  if (!stdSize.length || !stdSize.width || !stdSize.height || !maxWeight) {
     return freightList.value.map(() => ({
       overweight: false,
       oversize: false
     }))
   }
 
-  const maxWeight = parseFloat(rule.weight?.replace(/[^\d.]/g, '')) || Infinity
-  let sizeLimit = {
-    length: Infinity,
-    width: Infinity,
-    height: Infinity
-  }
-
-  if (rule.size?.includes('单边长')) {
-    // 通用单边长限制（如 澳洲等）
-    const maxSide = parseFloat(rule.size.replace(/[^\d.]/g, '')) || Infinity
-    sizeLimit = { length: maxSide, width: maxSide, height: maxSide }
-  } else {
-    // 明确给出了每个维度（如 日本）
-    const match = rule.size.match(/长\s*≤\s*(\d+)cm.*?宽\s*≤\s*(\d+)cm.*?高\s*≤\s*(\d+)cm/)
-    if (match) {
-      sizeLimit = {
-        length: parseFloat(match[1]),
-        width: parseFloat(match[2]),
-        height: parseFloat(match[3])
-      }
-    }
-  }
-
   return freightList.value.map(item => {
+    const oversize =
+      item.length > stdSize.length ||
+      item.width > stdSize.width ||
+      item.height > stdSize.height
+
+    const overweight = item.weight > maxWeight
+
     return {
-      overweight: item.weight > maxWeight,
-      oversize:
-        item.length > sizeLimit.length ||
-        item.width > sizeLimit.width ||
-        item.height > sizeLimit.height
+      overweight,
+      oversize
     }
   })
 })
 
+
+async function handleGeneratePlan () {
+  try {
+    const { code, size, weight } = stdMap[selectedLocation.value]
+    const std = { code, ...size, weight }
+    const outerLimit = {
+      maxLength: constraints[selectedLocation.value].length,
+      maxWidth: constraints[selectedLocation.value].width,
+      maxHeight: constraints[selectedLocation.value].height,
+      maxWeight: constraints[selectedLocation.value].weight
+    }
+
+    const resp = await generatePackingPlan(freightList.value, std, outerLimit)
+
+    if (resp.success) {
+      console.log('装箱成功：', resp.plan)
+      alert('装箱方案已生成，请查看控制台')
+    } else {
+      alert(resp.message || '装箱失败')
+    }
+  } catch (err) {
+    console.error('装箱异常', err)
+    alert('网络异常或服务器错误')
+  }
+}
 </script>

@@ -197,6 +197,27 @@
   margin-right: 10px;
 }
 
+/* 生成方案按钮 */
+.plan-button 
+{
+  position: absolute;
+  bottom: 20px;
+  right: 190px;
+  padding: 10px 20px;
+  background-color: black;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.plan-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
 /* 保存按钮 */
 .save-button {
   position: absolute;
