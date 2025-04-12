@@ -69,6 +69,7 @@ class Packing3D:
         return None
 
     def updateSpace(self, position3, block):
+        MIN_DIM = 1
         updatedSpaces = []
         for space in self.remainSpace:
             overlap = self.isOverlap(space, Space(position3, block.cube, Plane(Position2(space.position3.x, space.position3.y), block.cube.length, block.cube.width)))
@@ -82,17 +83,41 @@ class Packing3D:
             x4, y4, z4 = min(x2, position3.x + block.cube.length), min(y2, position3.y + block.cube.width), min(z2, position3.z + block.cube.height)
 
             if x3 > x1:
-                updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x3 - x1, y2 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y1), x3 - x1, y2 - y1))))
+                new_length = x3 - x1
+                new_width = y2 - y1
+                new_height = z2 - z1
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x3 - x1, y2 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y1), x3 - x1, y2 - y1))))
             if x2 > x4:
-                updatedSpaces.append(Space(Position3(x4, y1, z1), Cube(x2 - x4, y2 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x4, y1), x2 - x4, y2 - y1))))
+                new_length = x2 - x4
+                new_width = y2 - y1
+                new_height = z2 - z1
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x4, y1, z1), Cube(x2 - x4, y2 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x4, y1), x2 - x4, y2 - y1))))
             if y3 > y1:
-                updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x2 - x1, y3 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y1), x2 - x1, y3 - y1))))
+                new_length = x2 - x1
+                new_width = y3 - y1
+                new_height = z2 - z1
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x2 - x1, y3 - y1, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y1), x2 - x1, y3 - y1))))
             if y2 > y4:
-                updatedSpaces.append(Space(Position3(x1, y4, z1), Cube(x2 - x1, y2 - y4, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y4), x2 - x1, y2 - y4))))
+                new_length = x2 - x1
+                new_width = y2 - y4
+                new_height = z2 - z1
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x1, y4, z1), Cube(x2 - x1, y2 - y4, z2 - z1), self.getCrossPlane(space.plane, Plane(Position2(x1, y4), x2 - x1, y2 - y4))))
             if z3 > z1:
-                updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x2 - x1, y2 - y1, z3 - z1), space.plane))
+                new_length = x2 - x1
+                new_width = y2 - y1
+                new_height = z3 - z1
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x1, y1, z1), Cube(x2 - x1, y2 - y1, z3 - z1), space.plane))
             if z2 > z4:
-                updatedSpaces.append(Space(Position3(x1, y1, z4), Cube(x2 - x1, y2 - y1, z2 - z4), Plane(Position2(x3, y3), x4 - x3, y4 - y3)))
+                new_length = x2 - x1
+                new_width = y2 - y1
+                new_height = z2 - z4
+                if new_length >= MIN_DIM and new_width >= MIN_DIM and new_height >= MIN_DIM:
+                    updatedSpaces.append(Space(Position3(x1, y1, z4), Cube(x2 - x1, y2 - y1, z2 - z4), Plane(Position2(x3, y3), x4 - x3, y4 - y3)))
 
         updatedSpaces.sort(key=functools.cmp_to_key(self.spaceCmp1))
         return updatedSpaces
@@ -138,9 +163,23 @@ class Packing3D:
         std_W = std_info['width']
         std_H = std_info['height']
         std_weight = std_info.get('weight', 0)
+        max_weight = outer_limit['maxWeight']
 
         std_blocks = []
         remaining_goods = deepcopy(goods)
+        
+        WALL = 0.6  # cm
+        DENSITY = 0.54  # kg/m²
+        def calc_outer_weight(L, W, H):
+            area = 2 * (L * W + L * H + W * H) / 10000  # cm² to m²
+            return area * DENSITY
+    
+        # 计算单个标准件加上外壳后的最小重量
+        outer_L = std_L + 2 * WALL
+        outer_W = std_W + 2 * WALL
+        outer_H = std_H + 2 * WALL
+        min_shell_weight = calc_outer_weight(outer_L, outer_W, outer_H)
+        max_item_weight = max_weight - std_weight - min_shell_weight
 
         # 每次尝试填满一个标准件
         while any(item.num > 0 for item in remaining_goods.values()):
@@ -151,6 +190,7 @@ class Packing3D:
             )]
 
             block_contents = []
+            current_weight = 0
 
             while True:
                 if not self.remainSpace:
@@ -161,9 +201,20 @@ class Packing3D:
                     self.remainSpace.pop(0)
                     continue
 
-                best_block = block_table[0]
+                best_block = None
+                for blk in block_table:
+                    block_weight = blk.item.weight * blk.count
+                    projected_weight = current_weight + block_weight + std_weight + min_shell_weight
+                    if projected_weight <= max_weight:
+                        best_block = blk
+                        break
+
+                if not best_block:
+                    break
+
                 item = remaining_goods[best_block.item.name]
                 item.num -= best_block.count
+                current_weight += best_block.item.weight * best_block.count
 
                 block_contents.append({
                     'item': best_block.item.name,
@@ -196,8 +247,6 @@ class Packing3D:
         outer_boxes = self.pack_standard_cases_into_outer_boxes(std_blocks, std_info, outer_limit)
         return { "std_cases": std_blocks, "outer_boxes": outer_boxes }
 
-
-
     def pack_standard_cases_into_outer_boxes(self, std_blocks, std_info, outer_limit):
         from collections import deque
 
@@ -213,6 +262,14 @@ class Packing3D:
             area = 2 * (L * W + L * H + W * H) / 10000  # cm² to m²
             return area * DENSITY
 
+        def compute_used_box_dimensions(packed, std_L, std_W, std_H):
+            if not packed:
+                return 0, 0, 0
+            max_x = max(p['position']['x'] + std_L for p in packed)
+            max_y = max(p['position']['y'] + std_W for p in packed)
+            max_z = max(p['position']['z'] + std_H for p in packed)
+            return max_x, max_y, max_z
+        
         std_L = std_info['length']
         std_W = std_info['width']
         std_H = std_info['height']
@@ -225,9 +282,13 @@ class Packing3D:
         queue = deque(std_blocks)
 
         while queue:
-            self.remainSpace = [Space(Position3(0, 0, 0),
-                                    Cube(innerL, innerW, innerH),
-                                    Plane(Position2(0, 0), innerL, innerW))]
+            
+            self.remainSpace = [Space(
+                Position3(0, 0, 0),
+                Cube(innerL, innerW, innerH),
+                Plane(Position2(0, 0), innerL, innerW)
+            )]
+
             packed = []
             gross = 0
             temp = deque()
@@ -240,33 +301,50 @@ class Packing3D:
                 block = Block()
                 block.cube = Cube(std_L, std_W, std_H)
                 weight = std['gross_weight']
+
+                # 在放置前对空间排序，优先填低层空间
+                self.remainSpace.sort(key=lambda sp: (sp.position3.z, sp.position3.y, sp.position3.x))
+
                 pos = self.getPutPosition3(block, self.remainSpace[0])
 
-                if pos:
-                    block.position3 = pos
-                    self.remainSpace = self.updateSpace(pos, block)
-                    std['position'] = {
-                        "x": pos.x, "y": pos.y, "z": pos.z
-                    }
-                    packed.append(std)
-                    gross += weight
-                else:
+                if not pos:
                     temp.append(std)
+                    continue
 
-            usedH = max((s['position']['z'] + std_H for s in packed), default=0)
-            gross += calc_outer_weight(innerL, innerW, usedH)
+                mock_packed = packed + [{
+                    'position': {'x': pos.x, 'y': pos.y, 'z': pos.z}
+                }]
+                used_L, used_W, used_H = compute_used_box_dimensions(mock_packed, std_L, std_W, std_H)
+                predicted_shell_weight = calc_outer_weight(used_L + 2 * WALL, used_W + 2 * WALL, used_H + 2 * WALL)
+                predicted_total_weight = gross + weight + predicted_shell_weight
+
+                if predicted_total_weight > maxWeight:
+                    temp.append(std)
+                    continue
+
+                # 放入箱子
+                block.position3 = pos
+                self.remainSpace = self.updateSpace(pos, block)
+                std['position'] = {
+                    "x": pos.x, "y": pos.y, "z": pos.z
+                }
+                packed.append(std)
+                gross += weight
+
+            used_L, used_W, used_H = compute_used_box_dimensions(packed, std_L, std_W, std_H)
+            shell_weight = calc_outer_weight(used_L + 2 * WALL, used_W + 2 * WALL, used_H + 2 * WALL)
+            gross += shell_weight
 
             outer_boxes.append({
                 "dimensions": {
-                    "length": maxL,
-                    "width": maxW,
-                    "height": usedH + 2 * WALL
+                    "length": round(used_L + 2 * WALL, 2),
+                    "width": round(used_W + 2 * WALL, 2),
+                    "height": round(used_H + 2 * WALL, 2)
                 },
                 "contents": packed,
-                "gross_weight": gross
+                "gross_weight": round(gross, 3)
             })
 
-            queue = temp
+            queue = temp  # 剩下的标准件进入下一轮
 
         return outer_boxes
-

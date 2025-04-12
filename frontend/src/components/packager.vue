@@ -106,9 +106,9 @@ const selectedLocation = ref('')           // 当前选中的地点
 
 // 各地点对应的限制
 const constraints = {
-  澳洲: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg' , length: 63, width: 63, height: 63, weight: 22 },
-  美国: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg' , length: 63, width: 63, height: 63, weight: 22 },
-  英国: { size: '单边长 ≤ 63cm', weightText: '≤ 15kg' , length: 63, width: 63, height: 63, weight: 15 },
+  澳洲: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg', length: 63, width: 63, height: 63, weight: 22 },
+  美国: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg', length: 63, width: 63, height: 63, weight: 22 },
+  英国: { size: '单边长 ≤ 63cm', weightText: '≤ 15kg', length: 63, width: 63, height: 63, weight: 15 },
   德国: { size: '单边长 ≤ 63cm', weightText: '≤ 22.5kg', length: 63, width: 63, height: 63, weight: 22.5 },
   日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weight: '≤ 40kg', length: 60, width: 50, height: 50, weight: 40 }
 }
@@ -198,6 +198,7 @@ async function handleSaveFreight() {
     alert('保存失败，请稍后重试。')
   }
 }
+
 /* ----- 错误信息提示 ----- */
 const freightWarnings = computed(() => {
   const location = selectedLocation.value
@@ -205,10 +206,32 @@ const freightWarnings = computed(() => {
   const rule = constraints[location] || {}
 
   const stdSize = std.size || {}
-  const maxWeight = rule.weight || Infinity  // 外包箱最大承重
+  const maxGrossWeight = rule.weight || Infinity  // 外包箱最大承重
+
+  // 计算最小外包箱重量（基于标准件尺寸）
+  const WALL_THICKNESS = 0.6 // cm
+  const MATERIAL_DENSITY = 0.54 // kg/m²
+  const calcShellWeight = (L, W, H) => {
+    const area = 2 * (L * W + L * H + W * H) / 10000 // cm²转m²
+    return area * MATERIAL_DENSITY
+  }
+
+  // 最小外包箱尺寸（标准件尺寸+两侧壁厚）
+  const minOuterLength = (stdSize.length || 0) + 2 * WALL_THICKNESS
+  const minOuterWidth = (stdSize.width || 0) + 2 * WALL_THICKNESS
+  const minOuterHeight = (stdSize.height || 0) + 2 * WALL_THICKNESS
+
+  // 最小外包箱重量
+  const minShellWeight = calcShellWeight(minOuterLength, minOuterWidth, minOuterHeight)
+
+  // 标准件自重（如果有）
+  const stdWeight = std.weight || 0
+
+  // 实际允许的最大货物重量 = 最大总承重 - 标准件自重 - 最小外包箱重量
+  const maxItemWeight = maxGrossWeight - stdWeight - minShellWeight
 
   // 如果缺失标准件或限制，则不报警告
-  if (!stdSize.length || !stdSize.width || !stdSize.height || !maxWeight) {
+  if (!stdSize.length || !stdSize.width || !stdSize.height || !maxItemWeight) {
     return freightList.value.map(() => ({
       overweight: false,
       oversize: false
@@ -221,7 +244,7 @@ const freightWarnings = computed(() => {
       item.width > stdSize.width ||
       item.height > stdSize.height
 
-    const overweight = item.weight > maxWeight
+    const overweight = item.weight > maxItemWeight
 
     return {
       overweight,
@@ -230,8 +253,8 @@ const freightWarnings = computed(() => {
   })
 })
 
-
-async function handleGeneratePlan () {
+/* 装箱方案生成 */
+async function handleGeneratePlan() {
   try {
     const { code, size, weight } = stdMap[selectedLocation.value]
     const std = { code, ...size, weight }
