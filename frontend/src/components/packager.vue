@@ -110,7 +110,7 @@ const constraints = {
   美国: { size: '单边长 ≤ 63cm', weightText: '≤ 22kg', length: 63, width: 63, height: 63, weight: 22 },
   英国: { size: '单边长 ≤ 63cm', weightText: '≤ 15kg', length: 63, width: 63, height: 63, weight: 15 },
   德国: { size: '单边长 ≤ 63cm', weightText: '≤ 22.5kg', length: 63, width: 63, height: 63, weight: 22.5 },
-  日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weight: '≤ 40kg', length: 60, width: 50, height: 50, weight: 40 }
+  日本: { size: '长 ≤ 60cm, 宽 ≤ 50cm, 高 ≤ 50cm', weightText: '≤ 40kg', length: 60, width: 50, height: 50, weight: 40 }
 }
 
 /* ----- 标准件信息显示 ----- */
