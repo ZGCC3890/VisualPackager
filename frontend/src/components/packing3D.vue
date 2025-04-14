@@ -21,14 +21,14 @@
         <div class="packing-summary">
             <strong>货物列表：</strong>
             <span v-for="name in currentCargoList" :key="name" class="cargo-name"
-                :class="{ disabled: isDisabled(name) }" @mouseenter="!isDisabled(name) && hoverCargo(name, true)"
+                :class="{ disabled: isDisabled(name), active: persistentSet.has(name) }" @mouseenter="!isDisabled(name) && hoverCargo(name, true)"
                 @mouseleave="!isDisabled(name) && hoverCargo(name, false)"
                 @click="!isDisabled(name) && togglePersistentHighlight(name)">
                 {{ name }}
             </span>
         </div>
-
-        <canvas ref="canvasRef" class="packing-canvas"></canvas>
+        <div class="align-left label"></div>
+        <canvas ref="canvasRef" class="packing-canvas" tabindex="0" style="outline: none"></canvas>
     </div>
 </template>
 
@@ -81,24 +81,17 @@ function drawBox(x, y, z, l, w, h, colorHex, opacity = 0.7, isCargo = false) {
     return mesh
 }
 
-function addLabel(text, x, y, z) {
-    const cvs = document.createElement('canvas')
-    const ctx = cvs.getContext('2d')
-    cvs.width = 440; cvs.height = 64
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, cvs.width, cvs.height)
-    ctx.fillStyle = '#000000'
-    ctx.font = '24px sans-serif'
-    ctx.fillText(text, 10, 42)
-
-    const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cvs) })
-    )
-    sprite.scale.set(28, 7, 1)
-    sprite.position.set(x, y, z)
-    scene.add(sprite)
+function addLabel(text) {
+    // 若已存在就直接更新文字
+    let dom = document.getElementById('scene-label')
+    if (!dom) {
+        dom = document.createElement('div')
+        dom.id = 'scene-label'
+        dom.className = 'scene-label'
+        document.querySelector('.label')?.appendChild(dom)
+    }
+    dom.textContent = text
 }
-
 
 /* ---------- build scene ---------- */
 function buildScene() {
@@ -114,7 +107,17 @@ function buildScene() {
     renderer.setSize(w, h)
 
     controls = new OrbitControls(camera, renderer.domElement)
-    
+    controls.enablePan = true
+    controls.listenToKeyEvents(canvasRef.value)
+    // 设置平移速度和键位
+    controls.keyPanSpeed = 50
+    controls.keys = {
+        LEFT: 'KeyA',   // A
+        UP: 'KeyW',   // W
+        RIGHT: 'KeyD',   // D
+        BOTTOM: 'KeyS'    // S
+    }
+
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.2)
     dirLight.position.set(100, 120, 80)
     scene.add(dirLight)
@@ -138,12 +141,8 @@ function renderCurrentBox() {
     const bd = box.dimensions
     const gross = box.gross_weight?.toFixed(2) || ''
     drawBox(0, 0, 0, bd.length, bd.width, bd.height, 0xffffff, 0.05, false)
-    addLabel(
-        `L:${bd.length}  W:${bd.width}  H:${bd.height}  Wt:${gross}kg`,
-        bd.length / 2,
-        bd.height + 10,
-        bd.width / 2
-    )
+    const volume = (bd.length * bd.width * bd.height / 1000000).toFixed(2)
+    addLabel(`长: ${bd.length} cm   宽: ${bd.width} cm   高: ${bd.height} cm   重量: ${gross} kg   体积: ${volume} m³`)
 
     stdList.value = []
     const cargoNames = new Set()
@@ -239,8 +238,20 @@ watch(() => props.plan, () => { currentIndex.value = 0; persistentSet.value.clea
 <style scoped>
 .packing3d-container {
     width: 100%;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
+    max-width: 1000px;
+    margin: 24px auto 0;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+    position: relative;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    /* 纵向堆叠子元素 */
+    gap: 16px;
+    /* 子元素之间垂直间距 */
+    align-items: center;
+    /* 默认让子元素水平居中 */
 }
 
 .packing-canvas {
@@ -295,5 +306,24 @@ watch(() => props.plan, () => { currentIndex.value = 0; persistentSet.value.clea
 .cargo-name.disabled {
     opacity: .25;
     pointer-events: none;
+}
+.cargo-name.active {
+    background: #2196f3;   /* 和 .std-name.active 同色 */
+    color: #fff;
+}
+
+
+.align-left {
+    align-self: flex-start;
+}
+
+.scene-label {
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, .85);
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+    pointer-events: none;
+    white-space: nowrap;
 }
 </style>

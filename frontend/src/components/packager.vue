@@ -1,4 +1,8 @@
 <template>
+  <!-- 提示 -->
+  <div v-if="showPlanToast" class="plan-toast">{{ planToastMsg }}</div>
+  <div v-if="showLoginToast" class="login-toast">{{ loginToastMsg }}</div>
+  <div v-if="showFreightToast" class="freight-toast">{{ freightToastMsg }}</div>
   <!-- 侧边栏 -->
   <PlanSidebar @planLoaded="handlePlanLoaded" />
   <!-- 顶部工具栏，左侧是“添加货物”按钮 -->
@@ -107,12 +111,12 @@ import Packing3D from './packing3D.vue'
 import PlanSidebar from './sidebar.vue'
 
 /* ----- 侧边栏 ----- */
-async function handlePlanLoaded (payload) {
+async function handlePlanLoaded(payload) {
   if (!payload.success) return
   selectedLocation.value = payload.destination
-  freightList.value      = payload.freight_data.map((f,i)=>({
-    productName:`货物${i+1}`,
-    length:f.length, width:f.width, height:f.height, weight:f.weight
+  freightList.value = payload.freight_data.map((f, i) => ({
+    productName: `货物${i + 1}`,
+    length: f.length, width: f.width, height: f.height, weight: f.weight
   }))
   packingPlan.value = payload.plan           // 可能为 null
 }
@@ -171,13 +175,14 @@ onMounted(() => {
 
 /* ----- 登录成功提示 ----- */
 const showLoginToast = ref(false)
+const loginToastMsg = ref('登录成功，欢迎回来！')
 onMounted(() => {
   if (localStorage.getItem('showLoginToast') === 'true') {
     showLoginToast.value = true
     localStorage.removeItem('showLoginToast')
     setTimeout(() => {
       showLoginToast.value = false
-    }, 5000)
+    }, 3000)
   }
 })
 
@@ -202,20 +207,28 @@ function deleteItem(index) {
 }
 
 // 保存货物信息到后端
+const showFreightToast = ref(false)
+const freightToastMsg = ref('')
 async function handleSaveFreight() {
   try {
     const storedUsername = localStorage.getItem('username') || ''
-    const destination  = selectedLocation.value            // ★ 当前发货地
-    const payload  = {
-      username     : storedUsername,
-      destination  : destination,
-      freight_data : freightList.value,
-      plan         : packingPlan.value || null    // ★ 追加方案（若已生成）
+    const destination = selectedLocation.value            // ★ 当前发货地
+    const payload = {
+      username: storedUsername,
+      destination: destination,
+      freight_data: freightList.value,
+      plan: packingPlan.value || null    // ★ 追加方案（若已生成）
     }
-    const resp = await saveFreight(payload) 
+    const resp = await saveFreight(payload)
 
     // 例如后端返回 { success: true, message: '货物信息已保存' }
-    alert(resp.message || '货物信息已成功保存！')
+    if (resp.success) {
+      freightToastMsg.value = '货物信息已保存'
+      showFreightToast.value = true
+      setTimeout(() => (showFreightToast.value = false), 3000)
+    } else {
+      alert(resp.message || '保存失败，请稍后重试。')
+    }
   } catch (error) {
     console.error('保存货物信息出错:', error)
     alert('保存失败，请稍后重试。')
@@ -277,6 +290,8 @@ const freightWarnings = computed(() => {
 })
 
 const packingPlan = ref(null)
+const showPlanToast = ref(false)
+const planToastMsg = ref('')
 /* 装箱方案生成 */
 async function handleGeneratePlan() {
   try {
@@ -304,7 +319,9 @@ async function handleGeneratePlan() {
     if (resp.success) {
       console.log('装箱成功：', resp.plan)
       packingPlan.value = resp.plan
-      alert('装箱方案已生成，请查看控制台')
+      planToastMsg.value = '装箱方案已生成，请查看3D视图'
+      showPlanToast.value = true
+      setTimeout(() => (showPlanToast.value = false), 3000)
     } else {
       alert(resp.message || '装箱失败')
     }
@@ -313,4 +330,5 @@ async function handleGeneratePlan() {
     alert('网络异常或服务器错误')
   }
 }
+
 </script>

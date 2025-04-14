@@ -262,3 +262,16 @@ input[type="number"]::-webkit-inner-spin-button {
   height: 20px;
   margin-right: 6px;
 }
+
+/* 提示 */
+.freight-toast,
+.login-toast,
+.plan-toast {
+  position: fixed;
+  top: 50px; left: 50%; transform: translateX(-50%);
+  background: #4caf50;  /* 绿色 */
+  color: #fff; padding: 10px 24px;
+  border-radius: 6px; z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  font-size: 14px;
+}

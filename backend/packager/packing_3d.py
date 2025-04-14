@@ -280,7 +280,8 @@ class Packing3D:
 
         outer_boxes = []
         queue = deque(std_blocks)
-
+        dims = [('x', std_L), ('y', std_W), ('z', std_H)]
+        axis_order = [axis for axis, _ in sorted(dims, key=lambda t: t[1])]
         while queue:
             
             self.remainSpace = [Space(
@@ -293,6 +294,7 @@ class Packing3D:
             gross = 0
             temp = deque()
 
+            
             while queue:
                 std = queue.popleft()
                 if not std['contents']:
@@ -301,9 +303,16 @@ class Packing3D:
                 block = Block()
                 block.cube = Cube(std_L, std_W, std_H)
                 weight = std['gross_weight']
-
+                
+                self.remainSpace.sort(
+                    key=lambda sp: (
+                        getattr(sp.position3, axis_order[2]),
+                        getattr(sp.position3, axis_order[1]),
+                        getattr(sp.position3, axis_order[0])
+                    )
+                )
                 # 在放置前对空间排序，优先填低层空间
-                self.remainSpace.sort(key=lambda sp: (sp.position3.z, sp.position3.y, sp.position3.x))
+                # self.remainSpace.sort(key=lambda sp: (sp.position3.z, sp.position3.x, sp.position3.y))
 
                 pos = None
                 for sp in self.remainSpace:
