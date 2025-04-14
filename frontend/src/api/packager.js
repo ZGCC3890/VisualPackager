@@ -10,11 +10,8 @@ export const userLogin = async (username, password) => {
 };
 
 /* 保存货物信息 */
-export const saveFreight = async (username, freightData) => {
-    const response = await axios.post(`${API_BASE_URL}/freight/`, {
-      username,         // 传给后端用来查找 User
-      freight_data: freightData, // 货物信息数组
-    });
+export const saveFreight = async (data) => {
+    const response = await axios.post(`${API_BASE_URL}/freight/`, data);
     return response.data; // 例如 { success: true, message: '货物信息已保存！' }
 };
 
@@ -27,3 +24,23 @@ export const generatePackingPlan = async (goodsList, stdInfo, outerLimit) => {
   });
   return response.data; // { success: true, plan: [...] }
 };
+
+export const fetchPlans = async (username) => {
+  const { data } = await axios.get(`${API_BASE_URL}/plans/`, { params:{ username } })
+  return data.plans            // [{id, title}]
+}
+
+export const fetchPlanById = async (id) => {
+  const { data } = await axios.get(`${API_BASE_URL}/plans/${id}/`)
+  return data                   // { freight_data, plan, destination }
+}
+
+export const renamePlan = async (id, title) => {
+  const { data } = await axios.post(`${API_BASE_URL}/plans/${id}/rename/`, { title })
+  return data
+}
+
+export const deletePlan = async (id) => {
+  const { data } = await axios.post(`${API_BASE_URL}/plans/${id}/delete/`)
+  return data
+}

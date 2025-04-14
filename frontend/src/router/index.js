@@ -1,8 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Login from '../components/login.vue'
 import Packager from '../components/packager.vue'
-import History from '../components/history.vue'
-
 
 const router = createRouter({
   history: createWebHashHistory('/zgcc/packager'),
@@ -10,7 +8,6 @@ const router = createRouter({
     { path: '/:pathMatch(.*)*', redirect: '/login' }, // 重定向不匹配路由到登录页
     { path: '/login', name: 'login', component: Login },
     { path: '/packager', name: 'packager', component: Packager },
-    { path: '/history', name: 'history', component: History },
   ]
 })
 

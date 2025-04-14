@@ -4,7 +4,7 @@
 
     <div class="login-card">
       <div class="login-image">
-        <img src="/packager.png" alt="login" />
+        <img src="/images/packager.png" alt="login" />
       </div>
 
       <div class="login-form">

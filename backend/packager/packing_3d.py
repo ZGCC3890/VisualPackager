@@ -305,7 +305,11 @@ class Packing3D:
                 # 在放置前对空间排序，优先填低层空间
                 self.remainSpace.sort(key=lambda sp: (sp.position3.z, sp.position3.y, sp.position3.x))
 
-                pos = self.getPutPosition3(block, self.remainSpace[0])
+                pos = None
+                for sp in self.remainSpace:
+                    pos = self.getPutPosition3(block, sp)
+                    if pos is not None:
+                        break
 
                 if not pos:
                     temp.append(std)
@@ -315,7 +319,10 @@ class Packing3D:
                     'position': {'x': pos.x, 'y': pos.y, 'z': pos.z}
                 }]
                 used_L, used_W, used_H = compute_used_box_dimensions(mock_packed, std_L, std_W, std_H)
-                predicted_shell_weight = calc_outer_weight(used_L + 2 * WALL, used_W + 2 * WALL, used_H + 2 * WALL)
+                predicted_L = min(used_L, innerL)
+                predicted_W = min(used_W, innerW)
+                predicted_H = min(used_H, innerH)
+                predicted_shell_weight = calc_outer_weight(predicted_L + 2 * WALL, predicted_W + 2 * WALL, predicted_H + 2 * WALL)
                 predicted_total_weight = gross + weight + predicted_shell_weight
 
                 if predicted_total_weight > maxWeight:
@@ -331,6 +338,12 @@ class Packing3D:
                 packed.append(std)
                 gross += weight
 
+            final_L = min(used_L, innerL)
+            final_W = min(used_W, innerW)
+            final_H = min(used_H, innerH)
+            shell_weight = calc_outer_weight(final_L + 2 * WALL,
+                                             final_W + 2 * WALL,
+                                             final_H + 2 * WALL)
             used_L, used_W, used_H = compute_used_box_dimensions(packed, std_L, std_W, std_H)
             shell_weight = calc_outer_weight(used_L + 2 * WALL, used_W + 2 * WALL, used_H + 2 * WALL)
             gross += shell_weight
