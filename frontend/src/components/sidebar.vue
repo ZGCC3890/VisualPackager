@@ -1,79 +1,101 @@
 <template>
+    <!-- 展开按钮 -->
+    <img v-if="!visible" src="/icons/sidebar.png" class="expand-btn" @click="showSidebar" />
     <!-- 侧栏主体：使用 .sidebar-slide 动画控制展开 / 收起 -->
-    <transition name="sidebar-slide">
-        <aside v-show="visible" class="sidebar">
-            <!-- 折叠按钮：左上角图标 -->
-            <img src="/icons/sidebar.png" class="toggle-btn" @click="visible = false" />
+    <aside class="sidebar" :class="{ 'hidden-sidebar': !sidebarVisible }">
+        <img class="toggle-btn" @click="hideSidebar" src="/icons/sidebar.png" />
+        <div class="user-box">{{ username }}</div>
 
-            <!-- 用户名 -->
-            <div class="user-box">{{ username }}</div>
+        <!-- 新建方案按钮 -->
+        <button class="side-btn" @click="createPlan">
+            <img src="/icons/addFreight.png" class="icon" />
+            新建方案
+        </button>
 
-            <!-- 新建方案按钮 -->
-            <button class="side-btn" @click="createPlan">
-                <img src="/icons/addFreight.png" class="icon" />
-                新建方案
-            </button>
+        <!-- 历史方案列表 -->
+        <ul class="plan-list">
+            <li v-for="p in plans" :key="p.id" class="side-btn" :class="{ selected: selectedPlanId === p.id }"
+                @click="loadPlan(p.id)">
+                <!-- 标题或编辑框 -->
+                <template v-if="editingId !== p.id">
+                    <span @click="loadPlan(p.id)">{{ p.title }}</span>
+                </template>
+                <template v-else>
+                    <input v-model="editText" @keyup.enter="saveRename(p)" @blur="saveRename(p)" class="edit-input" />
+                </template>
 
-            <!-- 历史方案列表 -->
-            <ul class="plan-list">
-                <li v-for="p in plans" :key="p.id" class="side-btn" @click="loadPlan(p.id)">
-                    <!-- 标题或编辑框 -->
-                    <template v-if="editingId !== p.id">
-                        <span @click="loadPlan(p.id)">{{ p.title }}</span>
-                    </template>
-                    <template v-else>
-                        <input v-model="editText" @keyup.enter="saveRename(p)" @blur="saveRename(p)"
-                            class="edit-input" />
-                    </template>
+                <!-- 三点菜单 -->
+                <span class="dots" @mouseenter="hoverDots = p.id" @mouseleave="hoverDots = null"
+                    @click.stop="openMenu(p.id, $event)">
+                    {{ hoverDots === p.id ? '•••' : '···' }}
+                </span>
+            </li>
+        </ul>
+        <ul v-if="menuVisible" class="pop-menu" :style="menuStyle">
+            <li @click="startRename">重命名</li>
+            <li @click="deleteFunction">删除</li>
+        </ul>
+    </aside>
 
-                    <!-- 三点菜单 -->
-                    <span class="dots" @mouseenter="hoverDots = p.id" @mouseleave="hoverDots = null"
-                        @click.stop="openMenu(p.id, $event)">
-                        {{ hoverDots === p.id ? '•••' : '···' }}
-                    </span>
-                </li>
-            </ul>
-            <ul v-if="menuVisible" class="pop-menu" :style="menuStyle">
-                <li @click="startRename">重命名</li>
-                <li @click="deleteFunction">删除</li>
-            </ul>
-        </aside>
-    </transition>
-
-    <!-- 展开按钮（侧栏隐藏时显示） -->
-    <transition name="sidebar-slide">
-        <img v-if="!visible" src="/icons/sidebar.png" class="expand-btn" @click="visible = true" />
-    </transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { fetchPlans, fetchPlanById, renamePlan, deletePlan } from '../api/packager'
 
-const emit = defineEmits(['planLoaded'])
+const emit = defineEmits(['planLoaded', 'sidebarVisible'])
 const username = localStorage.getItem('username') || '未登录'
 const visible = ref(true)
+const sidebarVisible = ref(true)
 const plans = ref([])
+let hideTimer = null
 
+// 展开按钮点击
+function showSidebar() {
+    if (hideTimer) {
+        clearTimeout(hideTimer)
+        hideTimer = null
+    }
+    
+    visible.value = true
+    emit('sidebarVisible', true)
+    sidebarVisible.value = true
+}
+
+// 折叠按钮点击
+function hideSidebar() {
+    emit('sidebarVisible', false)
+    visible.value = false
+
+    if (hideTimer) clearTimeout(hideTimer)
+    hideTimer = setTimeout(() => {
+        sidebarVisible.value = false
+        hideTimer = null // 清除引用
+    }, 300)
+}
 /** 加载历史方案列表 */
 async function refresh() {
     plans.value = await fetchPlans(username)
 }
 
+const selectedPlanId = ref(null)
 /** 点击方案标题，加载该方案 */
 async function loadPlan(id) {
+    selectedPlanId.value = id
     const data = await fetchPlanById(id)
     emit('planLoaded', data) // 抛给父组件
 }
 
+
 /* ★ 新建空白方案：向父组件发出空数据 */
 function createPlan() {
     emit('planLoaded', {
-        success      : true,
+        success: true,
         destination: '',      // 发货地清空
         freight_data: [],      // 货物列表为空
         plan: null     // 无装箱方案
     })
+    selectedPlanId.value = null
 }
 onMounted(refresh)
 
@@ -114,19 +136,15 @@ async function deleteFunction() {
 
 /* 点击空白关闭菜单 */
 window.addEventListener('click', () => { menuVisible.value = false })
+watch(visible, v => emit('sidebarVisible', v))
 
 </script>
 
 <style scoped>
 /* ========== 动画 ========== */
-.sidebar-slide-enter-active,
-.sidebar-slide-leave-active {
-    transition: transform 0.3s;
-}
-
-.sidebar-slide-enter-from,
-.sidebar-slide-leave-to {
-    transform: translateX(-100%);
+.hidden-sidebar {
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* ========== 侧栏主体 ========== */
@@ -136,22 +154,20 @@ window.addEventListener('click', () => { menuVisible.value = false })
     background: #f5f5f5;
     /* 灰色与按钮一致 */
     border-right: 1px solid #ddd;
-    position: fixed;
     left: 0;
     top: 0;
-    z-index: 50;
+    z-index: 10;
     display: flex;
     flex-direction: column;
     padding-top: 46px;
-    /* 预留给 toggle-btn */
+    position: fixed;
 }
 
 /* ========== 折叠/展开图标 ========== */
-.toggle-btn,
-.expand-btn {
-    position: fixed;
+/* 折叠按钮：固定在侧边栏内部左上角 */
+.toggle-btn {
+    position: absolute;
     top: 12px;
-    /* 两者都 12px，保证同一高度 */
     left: 12px;
     width: 28px;
     height: 28px;
@@ -159,6 +175,18 @@ window.addEventListener('click', () => { menuVisible.value = false })
     z-index: 60;
 }
 
+/* 展开按钮：固定在页面左上角 */
+.expand-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    z-index: 60;
+}
+
+/* 悬浮样式共用 */
 .toggle-btn:hover,
 .expand-btn:hover {
     background: #e0e0e0;
@@ -207,6 +235,12 @@ window.addEventListener('click', () => { menuVisible.value = false })
     list-style: none;
     padding: 0;
     margin: 0;
+}
+
+/* 被选中的方案按钮始终为灰色 */
+.side-btn.selected {
+    background: #d6d6d6;
+    box-shadow: none;
 }
 
 .plan-list li {

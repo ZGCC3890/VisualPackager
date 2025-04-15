@@ -1,3 +1,17 @@
+.main-wrapper {
+  transition: margin-left 0.3s ease;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20; 
+  position: fixed;
+  overflow-y: auto;
+}
+.with-sidebar {
+  margin-left: 260px;
+}
+
 .toolbar {
   width: 1000px;
   margin: 50px auto 0;
